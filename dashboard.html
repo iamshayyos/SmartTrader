@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>לוח בקרה - SmartTrader</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <script src="js/dashboard.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script>
+    // בדיקה שהמשתמש מחובר
+    if (!localStorage.getItem("currentUser")) {
+      window.location.href = "index.html";
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">SmartTrader - לוח בקרה</h1>
+
+    <label class="block mb-2">בחר מניה או מטבע:</label>
+    <select id="assetSelect" class="w-full p-2 border rounded mb-4">
+      <option value="AAPL">AAPL</option>
+      <option value="TSLA">TSLA</option>
+      <option value="BTC">BTC</option>
+      <option value="ETH">ETH</option>
+    </select>
+
+    <button id="analyzeBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+      נתח נכס
+    </button>
+
+    <div id="result" class="mt-6 hidden">
+      <p id="recommendation" class="text-lg font-semibold"></p>
+      <p id="reason" class="text-sm text-gray-700"></p>
+      <button id="executeBtn" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">בצע פעולה</button>
+    </div>
+
+    <div class="mt-6">
+      <a href="portfolio.html" class="text-blue-600 underline">⤵ צפה בתיק שלך</a>
+    </div>
+  </div>
+</body>
+</html>
