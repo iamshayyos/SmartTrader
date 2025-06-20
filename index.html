@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>התחברות - SmartTrader</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white p-6 rounded shadow w-80">
+    <h2 class="text-xl font-bold mb-4 text-center">התחברות</h2>
+    <input id="login-username" type="text" placeholder="שם משתמש" class="w-full p-2 mb-3 border rounded" />
+    <input id="login-password" type="password" placeholder="סיסמה" class="w-full p-2 mb-4 border rounded" />
+    <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">התחבר</button>
+    <p class="mt-4 text-sm text-center">
+      אין לך חשבון?
+      <a href="register.html" class="text-blue-600 underline">הרשם כאן</a>
+    </p>
+  </div>
+  <script src="js/auth.js"></script>
+</body>
+</html>
