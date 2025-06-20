@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>ניהול מקורות מידע - SmartTrader</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <script src="js/sources.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">🛰️ ניהול מקורות מידע</h1>
+
+    <h2 class="text-lg font-semibold mb-2">מקורות ברירת מחדל</h2>
+    <ul class="list-disc ml-6 text-sm text-gray-700 mb-6" id="defaultSources">
+      <!-- יוצגו מתוך קוד -->
+    </ul>
+
+    <h2 class="text-lg font-semibold mb-2">המקורות שלי</h2>
+    <ul class="list-disc ml-6 text-sm text-gray-700 mb-4" id="customSources">
+      <!-- מקורות אישיים -->
+    </ul>
+
+    <div class="mb-4">
+      <input id="newSourceInput" type="text" placeholder="הוסף כתובת מקור (URL)"
+        class="w-full p-2 border rounded" />
+      <button onclick="addSource()" class="w-full bg-green-600 text-white py-2 mt-2 rounded hover:bg-green-700">
+        ➕ הוסף מקור
+      </button>
+    </div>
+
+    <div class="mt-6">
+      <a href="dashboard.html" class="text-blue-600 underline">← חזרה ללוח הבקרה</a>
+    </div>
+  </div>
+</body>
+</html>
