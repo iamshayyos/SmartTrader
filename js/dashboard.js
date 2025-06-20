@@ -1,61 +1,65 @@
-function getCustomSources(user) {
-  const key = `custom_sources_${user}`;
-  return JSON.parse(localStorage.getItem(key) || "[]");
-}
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("analyzeBtn").addEventListener("click", analyzeAsset);
+  document.getElementById("executeBtn").addEventListener("click", executeAction);
+});
 
-function getAllSources(user) {
-  const defaultSources = [
-    "https://www.ynet.co.il",
-    "https://www.calcalist.co.il",
-    "https://www.bizportal.co.il",
-    "https://twitter.com/bloomberg",
-    "https://t.me/YnetNews"
-  ];
-  const customSources = getCustomSources(user);
-  return [...defaultSources, ...customSources];
-}
-
-document.getElementById("analyzeBtn").addEventListener("click", function () {
+async function analyzeAsset() {
   const asset = document.getElementById("assetSelect").value;
-  const resultDiv = document.getElementById("result");
-  const recommendationText = document.getElementById("recommendation");
-  const reasonText = document.getElementById("reason");
+  const user  = localStorage.getItem("currentUser");
 
-  const user = localStorage.getItem("currentUser");
-  const allSources = getAllSources(user);
+  let tw = JSON.parse(localStorage.getItem(`twitter_${user}`)  || "[]");
+  let tg = JSON.parse(localStorage.getItem(`telegram_${user}`) || "[]");
+  if (!tw.length) tw = ["elonmusk"];
+  if (!tg.length) tg = ["WatcherGuru"];
 
-  // סימולציה של בחירת מקור אקראי ומסקנה דמיונית
-  const sampleSource = allSources[Math.floor(Math.random() * allSources.length)];
-  const options = ["קנייה", "החזק", "מכירה"];
-  const rec = options[Math.floor(Math.random() * options.length)];
-  const reasons = {
-    "קנייה": `זוהתה מגמת עלייה ב-${sampleSource}`,
-    "החזק": `לא נמצאה המלצה ברורה ב-${sampleSource}`,
-    "מכירה": `מגמת ירידה נצפתה ב-${sampleSource}`
-  };
+  const recEl   = document.getElementById("recommendation");
+  const guideEl = document.getElementById("reason");
+  const div     = document.getElementById("result");
+  recEl.textContent   = "טוען המלצה...";
+  guideEl.textContent = "טוען הנחיה...";
+  div.classList.remove("hidden");
 
-  recommendationText.textContent = `המלצה: ${rec}`;
-  reasonText.textContent = reasons[rec];
-  resultDiv.classList.remove("hidden");
+  // קריאה מקבילית ל-News endpoints
+  const [twResp, tgResp] = await Promise.all([
+    fetch(`http://127.0.0.1:5000/news/twitter?usernames=${tw.join(",")}`),
+    fetch(`http://127.0.0.1:5000/news/telegram?channels=${tg.join(",")}`)
+  ]);
+  const tweets = twResp.ok ? await twResp.json() : [];
+  const msgs   = tgResp.ok ? await tgResp.json() : [];
 
-  resultDiv.dataset.asset = asset;
-  resultDiv.dataset.recommendation = rec;
-});
+  // מאחדים ל־allNews
+  const allNews = [
+    ...tweets.map(n => `${n.source}: ${n.text}`),
+    ...msgs  .map(m => `${m.source}: ${m.text}`)
+  ];
 
-document.getElementById("executeBtn").addEventListener("click", function () {
-  const user = localStorage.getItem("currentUser");
-  const asset = document.getElementById("result").dataset.asset;
-  const recommendation = document.getElementById("result").dataset.recommendation;
-
-  const key = `portfolio_${user}`;
-  const portfolio = JSON.parse(localStorage.getItem(key) || "[]");
-
-  portfolio.push({
-    asset,
-    action: recommendation,
-    timestamp: new Date().toISOString()
+  // קריאה לפעולת הניתוח
+  const res = await fetch("http://127.0.0.1:5000/action_or_free", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset, news: allNews })
   });
+  const data = await res.json();
 
-  localStorage.setItem(key, JSON.stringify(portfolio));
+  // הוצאת שדות עם ברירת מחדל
+  const action   = data.action   || "—";
+  const guidance = data.guidance || "";
+
+  recEl.textContent   = `המלצה: ${action}`;
+  guideEl.textContent = guidance;
+  div.dataset.asset          = asset;
+  div.dataset.recommendation = action;
+}
+
+function executeAction() {
+  const user = localStorage.getItem("currentUser");
+  const div  = document.getElementById("result");
+  const asset = div.dataset.asset;
+  const recommendation = div.dataset.recommendation;
+  const key  = `portfolio_${user}`;
+  const pf   = JSON.parse(localStorage.getItem(key) || "[]");
+  pf.push({ asset, action: recommendation, timestamp: new Date().toISOString() });
+  localStorage.setItem(key, JSON.stringify(pf));
   alert("הפעולה נשמרה בתיק.");
-});
+}
