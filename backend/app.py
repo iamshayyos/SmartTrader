@@ -74,6 +74,9 @@ def action_or_free():
           timeout=30
         )
         resp.raise_for_status()
+        print("OpenRouter status:", resp.status_code)
+        print("OpenRouter response body:", resp.text)
+        resp.raise_for_status()
     except Exception as e:
         app.logger.error(f"OpenRouter error: {e}")
         # נחזור ב־fallback
@@ -82,6 +85,11 @@ def action_or_free():
           "guidance": "לא הצלחתי לקבל תשובה מהשירות, אנא נסה שוב."
         })
 
+    app.logger.Exception("openruter call failed")
+    return jsonify({
+          "action":   "החזקה",
+          "guidance": f"Fallback due to error: {e}"
+        }), 500
     raw = resp.json()["choices"][0]["message"]["content"].strip()
 
     # ניסיון לפרסר JSON
