@@ -1,13 +1,17 @@
-import os, json, re, requests
+# backend/app.py
+import os
+import json
+import re
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-
 from telegram_fetcher import fetch_telegram_messages
-from twitter_fetcher  import fetch_twitter_tweets
+from twitter_fetcher import fetch_twitter_tweets
+from openrouter_client import OpenRouterClient
 
 load_dotenv()
 API_KEY = os.getenv("OPENROUTER_API_KEY")
+ai_client = OpenRouterClient(API_KEY)
 
 app = Flask(__name__)
 CORS(app)
@@ -15,99 +19,48 @@ CORS(app)
 @app.route("/news/telegram")
 def telegram_news():
     channels = [c.strip() for c in request.args.get("channels","").split(",") if c.strip()]
-    all_messages = []
+    messages = []
     for ch in channels:
         try:
-            all_messages.extend(fetch_telegram_messages(ch))
+            messages.extend(fetch_telegram_messages(ch))
         except Exception as e:
             app.logger.error(f"Telegram fetch error for '{ch}': {e}")
-    return jsonify(all_messages)
-
+    return jsonify(messages)
 
 @app.route("/news/twitter")
 def twitter_news():
     users = [u.strip() for u in request.args.get("usernames","").split(",") if u.strip()]
-    all_tweets = []
+    tweets = []
     for u in users:
         try:
-            all_tweets.extend(fetch_twitter_tweets(u))
+            tweets.extend(fetch_twitter_tweets(u))
         except Exception as e:
             app.logger.error(f"Twitter fetch error for '{u}': {e}")
-    return jsonify(all_tweets)
-
+    return jsonify(tweets)
 
 @app.route("/action_or_free", methods=["POST"])
 def action_or_free():
-    data  = request.get_json() or {}
-    asset = data.get("asset","")
-    news  = data.get("news", [])
-
-    # בונים פרומפט
-    prompt = f"""אתה יועץ השקעות מקצועי.
-בתוך החדשות על {asset}:
-{''.join(f'- {n}\n' for n in news)}
-
-ענה בפורמט JSON בלבד:
-{{
-  "action": אחד מ־["קנייה","החזקה","מכירה"],
-  "guidance": "הנחיה תמציתית בעברית"
-}}
-"""
-
-    # שליחת בקשה ל-OpenRouter
+    data = request.get_json() or {}
+    asset = data.get("asset",
+                     "")
+    news = data.get("news", [])
+    # בונים prompt
+    user_prompt = (
+        f"Given the following news about {asset}:\n" +
+        "\n".join(news) +
+        "\nRecommend one action: קנייה, החזקה, או מכירה. "
+        "Provide the recommendation and a brief guidance in Hebrew."
+    )
     try:
-        resp = requests.post(
-          "https://api.openrouter.ai/v1/chat/completions",
-          headers={
-            "Authorization": f"Bearer {API_KEY}",
-            "Content-Type":    "application/json"
-          },
-          json={
-            "model":       "deepseek-chat:free",
-            "messages": [
-              {"role":"system","content":"You are a helpful investment assistant."},
-              {"role":"user",  "content": prompt}
-            ],
-            "temperature": 0.2,
-            "max_tokens": 150
-          },
-          timeout=30
-        )
-        resp.raise_for_status()
-        print("OpenRouter status:", resp.status_code)
-        print("OpenRouter response body:", resp.text)
-        resp.raise_for_status()
+        raw = ai_client.chat(user_prompt)
     except Exception as e:
-        app.logger.error(f"OpenRouter error: {e}")
-        # נחזור ב־fallback
-        return jsonify({
-          "action":   "החזקה",
-          "guidance": "לא הצלחתי לקבל תשובה מהשירות, אנא נסה שוב."
-        })
-
-    app.logger.Exception("openruter call failed")
-    return jsonify({
-          "action":   "החזקה",
-          "guidance": f"Fallback due to error: {e}"
-        }), 500
-    raw = resp.json()["choices"][0]["message"]["content"].strip()
-
-    # ניסיון לפרסר JSON
-    try:
-        result = json.loads(raw)
-        if not isinstance(result, dict) or "action" not in result:
-            raise ValueError("No action key")
-    except Exception:
-        # fallback: נחפש את המילה הראשונה מתוך ["קנייה","מכירה","החזקה"]
-        m = re.search(r"(קנייה|מכירה|החזקה)", raw)
-        action = m.group(1) if m else "החזקה"
-        result = {
-            "action":   action,
-            "guidance": raw
-        }
-
-    return jsonify(result)
-
+        app.logger.error(f"AI call failed: {e}")
+        return jsonify({"action": "החזקה", "guidance": "שגיאה בשירות AI"}), 500
+    # parse
+    match = re.search(r"(קנייה|החזקה|מכירה)", raw)
+    action = match.group(1) if match else "החזקה"
+    guidance = raw
+    return jsonify({"action": action, "guidance": guidance})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
