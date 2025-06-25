@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register – SmartTrader</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode:'class' };</script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    html{font-family:'Poppins',sans-serif}
+    .glass{background:rgba(255,255,255,.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2)}
+    .dark .glass{background:rgba(17,24,39,.3);border:1px solid rgba(75,85,99,.3)}
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br
+             from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
+
+  <!-- Toggle -->
+  <button id="theme-toggle" class="fixed top-4 right-4 p-3 rounded-full
+           bg-white/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-100
+           shadow-lg border border-gray-200 dark:border-gray-600
+           hover:scale-110 backdrop-blur-sm transition-all duration-200">
+    <span id="light-icon">🌙</span><span id="dark-icon" class="hidden">☀️</span>
+  </button>
+
+  <!-- Card -->
+  <div class="glass p-8 rounded-3xl shadow-2xl w-full max-w-sm">
+    <h2 class="text-center text-3xl font-semibold mb-8
+               text-indigo-600 dark:text-indigo-300">Create Account</h2>
+
+    <form id="register-f" class="space-y-5">
+      <input id="ru" placeholder="Username" minlength="3" required
+             class="w-full p-4 rounded-xl glass text-gray-800 dark:text-gray-100">
+      <input id="re" type="email" placeholder="Email" required
+             class="w-full p-4 rounded-xl glass text-gray-800 dark:text-gray-100">
+      <input id="rp" type="password" placeholder="Password" minlength="6" required
+             class="w-full p-4 rounded-xl glass text-gray-800 dark:text-gray-100">
+      <input id="rc" type="password" placeholder="Confirm Password" minlength="6" required
+             class="w-full p-4 rounded-xl glass text-gray-800 dark:text-gray-100">
+      <button class="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600
+         hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700
+         text-white font-semibold rounded-xl shadow-xl
+         transition-all duration-300 hover:scale-[1.02]">
+        Create Account
+      </button>
+    </form>
+    <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+      Already have an account?
+      <a href="index.html"
+         class="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 underline">
+        Sign In
+      </a>
+    </p>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg
+                        bg-green-500 text-white opacity-0 pointer-events-none
+                        transition-all duration-300 -translate-y-10">
+    ✅ Account created!
+  </div>
+
+  <!-- Theme + Register -->
+  <script>
+  /* === Theme helper – אותו קוד בדיוק === */
+  const Theme = {
+    isDark:false,
+    init(){
+      this.isDark = (localStorage.getItem('theme') === 'dark');
+      document.documentElement.classList.toggle('dark', this.isDark);
+      document.getElementById('light-icon').classList.toggle('hidden', this.isDark);
+      document.getElementById('dark-icon' ).classList.toggle('hidden', !this.isDark);
+    },
+    toggle(){
+      this.isDark = !this.isDark;
+      document.documentElement.classList.toggle('dark', this.isDark);
+      localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+      document.getElementById('light-icon').classList.toggle('hidden', this.isDark);
+      document.getElementById('dark-icon' ).classList.toggle('hidden', !this.isDark);
+    },
+    go(path){ location.href = path; }
+  };
+  Theme.init();
+  document.getElementById('theme-toggle').onclick = () => Theme.toggle();
+
+  /* === Register flow === */
+  document.getElementById('register-f').addEventListener('submit', e=>{
+    e.preventDefault();
+    const u=document.getElementById('ru').value.trim();
+    const mail=document.getElementById('re').value.trim();
+    const p=document.getElementById('rp').value;
+    const c=document.getElementById('rc').value;
+
+    if(!u||!mail||!p||p!==c){alert('Fill the form correctly');return;}
+    const db=JSON.parse(localStorage.getItem('smarttrader_users')||'{}');
+    if(db[u]){alert('Username exists');return;}
+    db[u]={email:mail,password:p};
+    localStorage.setItem('smarttrader_users',JSON.stringify(db));
+
+    /* חיווי קצר + מעבר עם אותו מצב תצוגה */
+    document.getElementById('toast').classList.remove('opacity-0','-translate-y-10');
+    document.getElementById('toast').classList.add   ('opacity-100','translate-y-0');
+    localStorage.setItem('currentUser',u);    // התחברות אוטומטית
+    setTimeout(()=>Theme.go('dashboard.html'),2000);
+  });
+  </script>
+</body>
+</html>

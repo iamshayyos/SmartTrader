@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"
+      x-data="{ menuOpen:false }"
+      x-init="if(!localStorage.getItem('currentUser')) location.href='index.html'">
+
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tagged Sources – SmartTrader</title>
+
+  <!-- Poppins + Tailwind (v3) + Alpine -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode:'class' };</script>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <style>
+    html{font-family:'Poppins',sans-serif}
+    .glass{background:rgba(255,255,255,.2);backdrop-filter:blur(8px)}
+    .gradient-text{background:linear-gradient(90deg,#4f46e5,#ec4899);
+                   -webkit-background-clip:text;color:transparent}
+    /* Dark */
+    .dark body{background:#0f172a!important;color:#cbd5e1}
+    .dark .glass{background:rgba(30,41,59,.6)}
+    nav a:hover{background-color:rgba(99,102,241,.12)}
+    .dark nav a:hover{background-color:#334155}
+    /* Scrollbar */
+    .scrollbar-thin::-webkit-scrollbar{width:6px}
+    .scrollbar-thumb-rounded::-webkit-scrollbar-thumb{border-radius:10px}
+    .scrollbar-thumb-blue::-webkit-scrollbar-thumb{background-color:rgba(79,70,229,.5)}
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col
+             bg-gradient-to-br from-white to-gray-100
+             dark:from-gray-900 dark:to-gray-800 transition-colors">
+
+  <!-- DARK / LIGHT TOGGLE -->
+  <button id="theme-toggle"
+          class="fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full
+                 flex items-center justify-center
+                 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200
+                 shadow-lg border border-gray-300 dark:border-gray-600
+                 hover:scale-110 transition">
+    <span id="light-icon">🌙</span>
+    <span id="dark-icon" class="hidden">☀️</span>
+  </button>
+
+  <!-- HEADER -->
+  <header class="sticky top-0 inset-x-0 glass shadow-md z-30">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row
+                items-center justify-between px-6 py-4">
+
+      <!-- Logo + Hamburger -->
+      <div class="flex items-center justify-between w-full md:w-auto">
+        <h1 class="text-2xl font-semibold gradient-text">SmartTrader</h1>
+        <button @click="menuOpen=!menuOpen"
+                class="md:hidden p-2 rounded-full glass hover:scale-105 transition">☰</button>
+      </div>
+
+      <!-- NAV -->
+      <nav :class="menuOpen ? 'block' : 'hidden'"
+           class="w-full md:w-auto md:flex md:space-x-6 mt-4 md:mt-0">
+        <a href="dashboard.html"
+           class="block md:inline px-2 py-1 rounded transition
+                  text-gray-800 dark:text-gray-200">Dashboard</a>
+        <a href="sources.html"
+           class="block md:inline px-2 py-1 rounded bg-indigo-50 dark:bg-gray-700 font-semibold
+                  text-gray-800 dark:text-gray-200">Sources</a>
+        <a href="portfolio.html"
+           class="block md:inline px-2 py-1 rounded transition
+                  text-gray-800 dark:text-gray-200">Portfolio</a>
+        <a href="statistics.html"
+           class="block md:inline px-2 py-1 rounded transition
+                  text-gray-800 dark:text-gray-200">Stats</a>
+        <button onclick="logout()"
+                class="w-full md:w-auto mt-2 md:mt-0 bg-indigo-600 hover:bg-indigo-700
+                       text-white font-medium py-1 px-4 rounded-md transition">
+          Logout
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- OFFSET -->
+  <div class="h-16"></div>
+
+  <!-- MAIN -->
+  <main class="flex-1 p-8 max-w-6xl mx-auto space-y-8">
+    <h2 class="text-3xl font-semibold gradient-text text-center">🔖 Tagged Sources</h2>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <!-- Add Source -->
+      <section class="glass p-6 rounded-2xl shadow-lg hover:shadow-xl transition">
+        <h3 class="text-xl font-semibold mb-4">Add New Source</h3>
+        <div class="space-y-4">
+          <input id="newSourceUrl" type="url" placeholder="Enter Source URL"
+                 class="w-full py-2 px-4 rounded-md glass focus:ring-2
+                        focus:ring-indigo-300 transition"/>
+          <div>
+            <label for="newSourceTags" class="block mb-2 font-medium">Tag Assets:</label>
+            <select id="newSourceTags" multiple
+                    class="w-full py-2 px-4 rounded-md glass h-32 focus:ring-2
+                           focus:ring-indigo-300 transition scrollbar-thin
+                           scrollbar-thumb-rounded scrollbar-thumb-blue"></select>
+          </div>
+          <button onclick="addTaggedSource()"
+                  class="w-full py-2 bg-gradient-to-r from-indigo-500 to-pink-500
+                         hover:from-indigo-600 hover:to-pink-600 text-white
+                         font-semibold rounded-md shadow transition">
+            + Add Source
+          </button>
+        </div>
+      </section>
+
+      <!-- Sources Table -->
+      <section class="glass p-6 rounded-2xl shadow-lg hover:shadow-xl transition
+                      overflow-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-blue">
+        <h3 class="text-xl font-semibold mb-4">Current Sources</h3>
+        <table class="w-full table-auto text-left divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-800">
+            <tr>
+              <th class="px-4 py-2">Source URL</th>
+              <th class="px-4 py-2">Tagged Assets</th>
+              <th class="px-4 py-2 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sourcesTable" class="divide-y divide-gray-100 dark:divide-gray-800">
+            <!-- populated via JS -->
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <!-- SCRIPTS -->
+  <script src="js/auth.js"></script>
+  <script src="js/sources.js"></script>
+  <script src="js/theme.js"></script>
+  <script>
+    document.getElementById('theme-toggle').onclick = () => Theme.toggle();
+  </script>
+</body>
+</html>
